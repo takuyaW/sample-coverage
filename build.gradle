@@ -1,0 +1,55 @@
+apply plugin: 'java'
+apply plugin: 'jacoco'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+}
+
+// test {
+//     if (project.plugins.findPlugin('jacoco')) {
+//         finalizedBy jacocoTestReport
+//     }
+// }
+
+if (project.plugins.findPlugin('jacoco')) {
+    jacoco {
+        toolVersion = '0.8.1'
+    }
+}
+
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+    }
+}
+configurations {
+    antJUnit
+}
+
+dependencies {
+    antJUnit 'org.apache.ant:ant-junit:1.9.7'
+}
+
+task mergeJUnitReports {
+    ext {
+        resultsDir = file("$buildDir/test-results/test")
+        targetDir = file("$buildDir/test-results/merged")
+    }
+
+    doLast {
+        ant.taskdef(name: 'junitreport',
+                    classname: 'org.apache.tools.ant.taskdefs.optional.junit.XMLResultAggregator',
+                    classpath: configurations.antJUnit.asPath)
+
+        ant.junitreport(todir: resultsDir) {
+            fileset(dir: resultsDir, includes: 'TEST-*.xml')
+            report(todir: targetDir, format: 'frames')
+        }
+    }
+}
